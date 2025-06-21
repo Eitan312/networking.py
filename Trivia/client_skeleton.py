@@ -1,5 +1,5 @@
 import socket as s
-import Trivia.chatlib_skeleton as chatlib  # To use chatlib functions or consts, use cha
+import chatlib_skeleton as cha  # To use chatlib functions or consts, use cha
 
 SERVER_IP = "127.0.0.1"  # Our server will run on same computer as client
 SERVER_PORT = 5678
@@ -14,7 +14,7 @@ def build_and_send_message(conn, code, data):
     Parameters: conn (socket object), code (str), data (str)
     Returns: Nothing
     """
-    msg = chatlib.build_message(code, data)
+    msg = cha.build_message(code, data)
     conn.send(msg.encode())
 
 
@@ -27,7 +27,7 @@ def recv_message_and_parse(conn):
     If error occurred, will return None, None
     """
     full_msg = conn.recv(1024).decode()
-    cmd, data = chatlib.parse_message(full_msg)
+    cmd, data = cha.parse_message(full_msg)
     return cmd, data
 
 
@@ -46,9 +46,10 @@ def login(conn):
     password = input("Please enter password: \n")
     print("Checking...")
     while True:
-        data = chatlib.join_data([username, password])
-        build_and_send_message(conn, chatlib.PROTOCOL_CLIENT["login_msg"], data)
+        data = cha.join_data([username, password])
+        build_and_send_message(conn, cha.PROTOCOL_CLIENT["login_msg"], data)
         result, data = recv_message_and_parse(conn)
+        print(result)
         if result == "LOGIN_OK":
             break
         print("Incorrect Credentials, Please Enter Again.")
@@ -60,7 +61,7 @@ def login(conn):
 
 
 def logout(conn):
-    build_and_send_message(conn, chatlib.PROTOCOL_CLIENT["logout_msg"], "")
+    build_and_send_message(conn, cha.PROTOCOL_CLIENT["logout_msg"], "")
 
 
 def main():

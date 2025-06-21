@@ -82,8 +82,7 @@ def parse_message(data):
 			cmd += fields[0][index]
 			index += 1
 
-		if cmd is not None and not cmd in PROTOCOL_CLIENT.values():
-			cmd = None
+		if cmd is not None and not(cmd in PROTOCOL_CLIENT.values() or cmd in PROTOCOL_SERVER.values()):
 			raise Exception("Input was not in expected format")
 
 		msg = fields[2]
@@ -119,5 +118,4 @@ def join_data(msg_fields):
 	for field in msg_fields:
 		data +=  field + __DATA_DELIMITER
 
-	data -= __DATA_DELIMITER # removes extra hashtag
-	return data
+	return data[0 : len(data) - 1]
