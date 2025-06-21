@@ -1,18 +1,19 @@
 # Protocol Constants
 
-CMD_FIELD_LENGTH = 16	# Exact length of cmd field (in bytes)
-LENGTH_FIELD_LENGTH = 4   # Exact length of length field (in bytes)
-MAX_DATA_LENGTH = 10**LENGTH_FIELD_LENGTH-1  # Max size of data field according to protocol
-MSG_HEADER_LENGTH = CMD_FIELD_LENGTH + 1 + LENGTH_FIELD_LENGTH + 1  # Exact size of header (CMD+LENGTH fields)
-MAX_MSG_LENGTH = MSG_HEADER_LENGTH + MAX_DATA_LENGTH  # Max size of total message
-DELIMITER = "|"  # Delimiter character in protocol
-DATA_DELIMITER = "#"  # Delimiter in the data part of the message
+__CMD_FIELD_LENGTH = 16	# Exact length of cmd field (in bytes)
+__LENGTH_FIELD_LENGTH = 4   # Exact length of length field (in bytes)
+__MAX_DATA_LENGTH = 10**__LENGTH_FIELD_LENGTH-1  # Max size of data field according to protocol
+__MSG_HEADER_LENGTH = __CMD_FIELD_LENGTH + 1 + __LENGTH_FIELD_LENGTH + 1  # Exact size of header (CMD+LENGTH fields)
+__MAX_MSG_LENGTH = __MSG_HEADER_LENGTH + __MAX_DATA_LENGTH  # Max size of total message
+__DELIMITER = "|"  # Delimiter character in protocol
+__DATA_DELIMITER = "#"  # Delimiter in the data part of the message
 
-# Protocol Messages 
+# Protocol Messages
 # In this dictionary we will have all the client and server command names
 
 PROTOCOL_CLIENT = {
 "login_msg" : "LOGIN",
+
 "logout_msg" : "LOGOUT"
 } # Add more commands if needed
 
@@ -25,7 +26,7 @@ PROTOCOL_SERVER = {
 
 # Other constants
 
-ERROR_RETURN = None  # What is returned in case of an error
+__ERROR_RETURN = None  # What is returned in case of an error
 
 
 def build_message(cmd, data):
@@ -39,12 +40,12 @@ def build_message(cmd, data):
 	if cmd not in PROTOCOL_CLIENT.values():
 		return None
 
-	if len(data) > 9999:
+	if len(data) > __MAX_DATA_LENGTH:
 		return None
 
-	full_msg += cmd + '|'
+	full_msg += cmd + __DELIMITER
 	data_length = len(data)
-	full_msg += '0' * (4 - data_length) + str(data_length) + '|'
+	full_msg += '0' * (4 - data_length) + str(data_length) + __DELIMITER
 	full_msg += data
 
 	return full_msg
@@ -57,16 +58,24 @@ def parse_message(data):
 	"""
 	cmd, msg = "", ""
 
-	fields = data.split('|')
-	index = 0
-	while not fields[0][index] == ' ':
-		cmd += fields[0][index]
-		index += 1
+	fields = data.split(__DELIMITER)
 
-	if not cmd in PROTOCOL_CLIENT.values():
+	if len(fields[0]) == __CMD_FIELD_LENGTH:
+		index = 0
+		while not fields[0][index] == ' ':
+			cmd += fields[0][index]
+			index += 1
+	else:
 		cmd = None
 
-	if not int(fields[1]) == len(fields[2]):
+	if cmd is not None and not cmd in PROTOCOL_CLIENT.values():
+		cmd = None
+
+	if len(fields[2]) > __LENGTH_FIELD_LENGTH:
+		msg = None
+		return cmd,msg
+
+	if not int(fields[1]) == len(fields[2]) or len(fields[2]) > __MAX_DATA_LENGTH:
 		msg = None
 		return cmd,msg
 
@@ -83,7 +92,7 @@ def split_data(msg, expected_fields) -> list:
 	Returns: list of fields if all ok. If some error occurred, returns None
 	"""
 
-	fields = msg.split('#')
+	fields = msg.split(__DATA_DELIMITER)
 
 	if not len(fields) - 1 == expected_fields:
 		return [None]
@@ -99,7 +108,7 @@ def join_data(msg_fields):
 
 	data = ""
 	for field in msg_fields:
-		data +=  field + '#'
+		data +=  field + __DATA_DELIMITER
 
-	data -= '#' # removes extra hashtag
+	data -= __DATA_DELIMITER # removes extra hashtag
 	return data
