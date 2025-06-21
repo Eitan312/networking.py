@@ -43,9 +43,9 @@ def build_message(cmd, data):
 	if len(data) > __MAX_DATA_LENGTH:
 		return None
 
-	full_msg += cmd + __DELIMITER
+	full_msg += cmd + (16 - len(cmd)) * " " + __DELIMITER
 	data_length = len(data)
-	full_msg += '0' * (4 - data_length) + str(data_length) + __DELIMITER
+	full_msg += (__LENGTH_FIELD_LENGTH - len(str(data_length))) * "0" + str(data_length) + __DELIMITER
 	full_msg += data
 
 	return full_msg
@@ -56,33 +56,42 @@ def parse_message(data):
 	Parses protocol message and returns command name and data field
 	Returns: cmd (str), data (str). If some error occurred, returns None, None
 	"""
-	cmd, msg = "", ""
+	cmd, msg = None, None
 
-	fields = data.split(__DELIMITER)
+	try:
+		fields = data.split(__DELIMITER)
 
-	if len(fields[0]) == __CMD_FIELD_LENGTH:
+		if not len(fields) == 3:
+			return cmd, msg
+
+		if not len(fields[0]) == __CMD_FIELD_LENGTH:
+			raise Exception("Input was not in expected format")
+
+		if len(fields[1]) > __LENGTH_FIELD_LENGTH:
+			raise Exception("Input was not in expected format")
+
+		if not int(fields[1]) == len(fields[2]) or len(fields[2]) > __MAX_DATA_LENGTH:
+			raise Exception("Input was not in expected format")
+
+		cmd = ""
 		index = 0
-		while not fields[0][index] == ' ':
+		while index < __CMD_FIELD_LENGTH and fields[0][index] == ' ':
+			index += 1
+
+		while index < __CMD_FIELD_LENGTH and not fields[0][index] == ' ':
 			cmd += fields[0][index]
 			index += 1
-	else:
-		cmd = None
 
-	if cmd is not None and not cmd in PROTOCOL_CLIENT.values():
-		cmd = None
+		if cmd is not None and not cmd in PROTOCOL_CLIENT.values():
+			cmd = None
+			raise Exception("Input was not in expected format")
 
-	if len(fields[2]) > __LENGTH_FIELD_LENGTH:
-		msg = None
-		return cmd,msg
+		msg = fields[2]
 
-	if not int(fields[1]) == len(fields[2]) or len(fields[2]) > __MAX_DATA_LENGTH:
-		msg = None
-		return cmd,msg
-
-	msg = fields[2]
-
-	# The function should return 2 values
-	return cmd, msg
+		# The function should return 2 values
+		return cmd, msg
+	except Exception:
+		return cmd, msg
 
 
 def split_data(msg, expected_fields) -> list:
