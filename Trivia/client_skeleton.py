@@ -4,6 +4,7 @@ import Trivia.chatlib_skeleton as chatlib  # To use chatlib functions or consts,
 SERVER_IP = "127.0.0.1"  # Our server will run on same computer as client
 SERVER_PORT = 5678
 
+
 # HELPER SOCKET METHODS
 
 def build_and_send_message(conn, code, data):
@@ -57,13 +58,16 @@ def login(conn):
 
     print("Login Ok!")
 
+
 def logout(conn):
     build_and_send_message(conn, chatlib.PROTOCOL_CLIENT["logout_msg"], "")
+
 
 def main():
     trivia_socket = connect()
     login(trivia_socket)
     logout(trivia_socket)
+
 
 if __name__ == '__main__':
     main()
